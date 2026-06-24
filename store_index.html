@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gotcha Matcha — Store Stock Count</title>
+<style>
+  :root{--green:#2d6a4f;--green-d:#1f4d39;--green-bg:#eaf7f0;--bg:#f4f7f4;--card:#fff;
+        --line:#d8e8d8;--ink:#1a2e1a;--muted:#6b8f71;--red:#c0392b;--amber:#9a6a00}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--card);color:var(--ink);padding-bottom:96px}
+  header{background:var(--green);color:#fff;padding:14px 16px}
+  header h1{font-size:17px;font-weight:800}
+  header .sub{font-size:12px;opacity:.9;margin-top:2px}
+
+  .bar{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:12px 16px}
+  .bar .date{display:flex;align-items:center;gap:8px}
+  .bar label{font-size:12px;font-weight:700;color:var(--muted)}
+  .bar input[type=date]{padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit}
+  .remind{margin-top:10px;font-size:12px;color:var(--amber);background:#fff7e6;border:1px solid #f0dca8;border-radius:10px;padding:8px 10px}
+
+  .cat{margin:18px 16px 0;font-size:13px;font-weight:800;color:var(--green-d);text-transform:uppercase;letter-spacing:.04em}
+  .grid{margin:6px 16px 0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .row:first-child{border-top:none}
+  .row .info{flex:1 1 100%;min-width:0;display:flex;justify-content:space-between;align-items:baseline}
+  .row .name{font-size:15px;font-weight:700}
+  .row .now{font-size:11px;color:var(--muted)}
+  .row .now .LOW{color:var(--red);font-weight:800}
+  .ctrl{display:flex;align-items:center;gap:8px;flex:1 1 100%}
+  .ctrl input.count{width:84px;padding:11px 8px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;text-align:center}
+  .ctrl input.count.filled{border-color:var(--green);background:var(--green-bg)}
+  .ctrl input.recv{width:74px;padding:11px 8px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;text-align:center;color:var(--green-d)}
+  .ctrl .unit{font-size:12px;color:var(--muted);min-width:46px}
+  .ctrl .cant{margin-left:auto;font-size:12px;font-weight:700;padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--muted);white-space:nowrap}
+  .ctrl .cant.on{border-color:var(--amber);background:#fff7e6;color:var(--amber)}
+  .row.cantOn input.count{opacity:.4;pointer-events:none;background:#f3f3f3}
+
+  .weeklytoggle{margin:18px 16px 0}
+  .weeklytoggle button{width:100%;padding:13px;border:1.5px dashed var(--green);background:#fff;color:var(--green-d);border-radius:12px;font-size:15px;font-weight:700}
+  .weekly-wrap{display:none}
+  .weekly-wrap.show{display:block}
+
+  .footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center}
+  .footer .count{flex:1;font-size:13px;color:var(--muted)}
+  .footer button{padding:14px 22px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:800}
+  .footer button:disabled{background:#a8c3b1}
+
+  #toast{position:fixed;bottom:104px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
+  #toast.show{opacity:1}#toast.err{background:var(--red)}
+  .loading{padding:40px 16px;text-align:center;color:var(--muted)}
+  .legend{margin:4px 16px 0;font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🍵 Store Stock Count</h1>
+  <div class="sub" id="sub">Loading…</div>
+</header>
+
+<div class="bar">
+  <div class="date"><label>Count date</label><input type="date" id="date"></div>
+  <div class="remind">📋 Count <b>sealed / unopened</b> stock only — don't count opened packs. Put deliveries in the small <b>+recv</b> box, not the count.</div>
+</div>
+<div class="legend">Each item: <b>count</b> = how many full units now · <b>+recv</b> = received today (optional) · <b>Can't count</b> = full/too many.</div>
+
+<div id="daily"></div>
+
+<div class="weeklytoggle" id="weeklytoggle" style="display:none">
+  <button onclick="showWeekly()">+ Also do the weekly count (syrups, matcha, sauces…)</button>
+</div>
+<div class="weekly-wrap" id="weekly-wrap"><div id="weekly"></div></div>
+
+<div class="footer">
+  <div class="count" id="counter">Loading…</div>
+  <button id="saveBtn" onclick="save()" disabled>Submit</button>
+</div>
+<div id="toast"></div>
+
+<script>
+  // ====== PASTE YOUR DEPLOYED WEB APP URL HERE (ends in /exec) ======
+  var WEBAPP_URL = 'PASTE_WEB_APP_URL_HERE';
+  var STATE=null;
+
+  function load(){
+    fetch(WEBAPP_URL).then(function(r){return r.json();}).then(function(s){
+      if(!s.ok) throw new Error(s.error||'load failed');
+      STATE=s;
+      document.getElementById('sub').textContent =
+        s.isWeeklyDay ? ('Today is '+s.weeklyDayName+' — daily + weekly count') : 'Daily count';
+      var t=new Date(s.today); document.getElementById('date').value=s.today;
+      renderSection('daily', s.items.filter(function(i){return i.freq==='Daily';}));
+      renderSection('weekly', s.items.filter(function(i){return i.freq==='Weekly';}));
+      // Weekly: auto-show on Friday, else offer the toggle.
+      if(s.isWeeklyDay){ document.getElementById('weekly-wrap').classList.add('show'); }
+      else { document.getElementById('weeklytoggle').style.display='block'; }
+      updateCounter();
+    }).catch(function(e){
+      document.getElementById('daily').innerHTML='<div class="loading">Could not load. Check the web app URL.<br><small>'+e.message+'</small></div>';
+    });
+  }
+
+  function showWeekly(){
+    document.getElementById('weekly-wrap').classList.add('show');
+    document.getElementById('weeklytoggle').style.display='none';
+  }
+
+  function esc(s){return String(s).replace(/"/g,'&quot;');}
+
+  function renderSection(where, items){
+    var cats=[]; items.forEach(function(i){if(cats.indexOf(i.category)<0)cats.push(i.category);});
+    var html='';
+    cats.forEach(function(cat){
+      html+='<div class="cat">'+cat+'</div><div class="grid">';
+      items.filter(function(i){return i.category===cat;}).forEach(function(it){
+        var now = (it.level==null)?'—':(it.level+' '+it.countUnit);
+        var lowCls = (it.status==='LOW'||it.status==='OUT')?' class="LOW"':'';
+        html+=
+          '<div class="row" data-item="'+esc(it.item)+'">'+
+            '<div class="info"><span class="name">'+it.item+'</span>'+
+              '<span class="now">now: <span'+lowCls+'>'+now+'</span></span></div>'+
+            '<div class="ctrl">'+
+              '<input class="count" inputmode="decimal" placeholder="count" oninput="onInput(this)">'+
+              '<span class="unit">'+it.countUnit+'</span>'+
+              '<input class="recv" inputmode="decimal" placeholder="+recv" oninput="updateCounter()">'+
+              '<button class="cant" onclick="toggleCant(this)">Can\'t count</button>'+
+            '</div>'+
+          '</div>';
+      });
+      html+='</div>';
+    });
+    document.getElementById(where).innerHTML=html;
+  }
+
+  function onInput(el){ el.classList.toggle('filled', el.value!=='' && !isNaN(Number(el.value))); updateCounter(); }
+  function toggleCant(btn){
+    var row=btn.closest('.row'); row.classList.toggle('cantOn'); btn.classList.toggle('on');
+    if(row.classList.contains('cantOn')){ row.querySelector('.count').value=''; row.querySelector('.count').classList.remove('filled'); }
+    updateCounter();
+  }
+
+  function collect(){
+    var out=[];
+    document.querySelectorAll('.row[data-item]').forEach(function(row){
+      // only collect from visible rows (weekly hidden rows are ignored)
+      if(row.offsetParent===null) return;
+      var item=row.getAttribute('data-item');
+      var countEl=row.querySelector('.count'), recvEl=row.querySelector('.recv');
+      var cant=row.classList.contains('cantOn');
+      var count=countEl.value, recv=Number(recvEl.value)||0;
+      var has=(count!=='' && !isNaN(Number(count)));
+      if(has||recv>0||cant) out.push({item:item, count:has?Number(count):'', received:recv, cantCount:cant});
+    });
+    return out;
+  }
+
+  function updateCounter(){
+    var n=collect().length;
+    document.getElementById('counter').textContent = n? (n+' item'+(n>1?'s':'')+' to log') : 'Nothing entered yet';
+    document.getElementById('saveBtn').disabled = (n===0);
+  }
+
+  function save(){
+    var payload={ date:document.getElementById('date').value, counts:collect() };
+    var btn=document.getElementById('saveBtn'); btn.disabled=true; btn.textContent='Saving…';
+    fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json();}).then(function(res){
+        btn.disabled=false; btn.textContent='Submit';
+        if(res.ok){ toast('✅ '+res.message,false); load(); }
+        else { toast('⚠ '+(res.error||'Failed'),true); }
+      }).catch(function(e){ btn.disabled=false; btn.textContent='Submit'; toast('⚠ '+e.message,true); });
+  }
+
+  function toast(m,err){var t=document.getElementById('toast');t.textContent=m;t.className='show'+(err?' err':'');clearTimeout(t._t);t._t=setTimeout(function(){t.className='';},4000);}
+  load();
+</script>
+</body>
+</html>
