@@ -2,83 +2,95 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Gotcha Matcha — Store Stock Count</title>
 <style>
   :root{--green:#2d6a4f;--green-d:#1f4d39;--green-bg:#eaf7f0;--bg:#f4f7f4;--card:#fff;
         --line:#d8e8d8;--ink:#1a2e1a;--muted:#6b8f71;--red:#c0392b;--amber:#9a6a00}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--card);color:var(--ink);padding-bottom:96px}
-  header{background:var(--green);color:#fff;padding:14px 16px}
-  header h1{font-size:17px;font-weight:800}
-  header .sub{font-size:12px;opacity:.9;margin-top:2px}
+  html,body{background:var(--card)}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);
+       padding-bottom:calc(96px + env(safe-area-inset-bottom));font-size:16px}
+
+  /* Centered column on big screens, full-width on phones */
+  .wrap{max-width:640px;margin:0 auto}
+
+  header{background:var(--green);color:#fff;padding:16px;padding-top:calc(16px + env(safe-area-inset-top))}
+  header .hwrap{max-width:640px;margin:0 auto}
+  header h1{font-size:18px;font-weight:800}
+  header .sub{font-size:13px;opacity:.9;margin-top:2px}
 
   .bar{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:12px 16px}
-  .bar .date{display:flex;align-items:center;gap:8px}
-  .bar label{font-size:12px;font-weight:700;color:var(--muted)}
-  .bar input[type=date]{padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit}
-  .remind{margin-top:10px;font-size:12px;color:var(--amber);background:#fff7e6;border:1px solid #f0dca8;border-radius:10px;padding:8px 10px}
+  .bar .date{display:flex;align-items:center;gap:10px}
+  .bar label{font-size:13px;font-weight:700;color:var(--muted)}
+  .bar input[type=date]{flex:1;padding:12px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit}
+  .remind{margin-top:10px;font-size:13px;color:var(--amber);background:#fff7e6;border:1px solid #f0dca8;border-radius:10px;padding:10px 12px;line-height:1.4}
+  .legend{padding:8px 16px 0;font-size:12px;color:var(--muted)}
 
-  .cat{margin:18px 16px 0;font-size:13px;font-weight:800;color:var(--green-d);text-transform:uppercase;letter-spacing:.04em}
-  .grid{margin:6px 16px 0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  .row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .cat{padding:20px 16px 0;font-size:13px;font-weight:800;color:var(--green-d);text-transform:uppercase;letter-spacing:.04em}
+  .grid{margin:8px 12px 0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .row{padding:13px 14px;border-top:1px solid var(--line)}
   .row:first-child{border-top:none}
-  .row .info{flex:1 1 100%;min-width:0;display:flex;justify-content:space-between;align-items:baseline}
-  .row .name{font-size:15px;font-weight:700}
-  .row .now{font-size:11px;color:var(--muted)}
+  .row .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:9px}
+  .row .name{font-size:16px;font-weight:700}
+  .row .now{font-size:12px;color:var(--muted);white-space:nowrap}
   .row .now .LOW{color:var(--red);font-weight:800}
-  .ctrl{display:flex;align-items:center;gap:8px;flex:1 1 100%}
-  .ctrl input.count{width:84px;padding:11px 8px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;text-align:center}
+  .ctrl{display:flex;align-items:center;gap:12px}
+  .ctrl input.count{width:120px;height:50px;padding:8px;border:1.5px solid var(--line);border-radius:12px;font-size:20px;font-weight:700;text-align:center}
   .ctrl input.count.filled{border-color:var(--green);background:var(--green-bg)}
-  .ctrl input.recv{width:74px;padding:11px 8px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;text-align:center;color:var(--green-d)}
-  .ctrl .unit{font-size:12px;color:var(--muted);min-width:46px}
-  .ctrl .cant{margin-left:auto;font-size:12px;font-weight:700;padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--muted);white-space:nowrap}
+  .ctrl .unit{font-size:14px;color:var(--muted)}
+  .ctrl .cant{margin-left:auto;font-size:13px;font-weight:700;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--muted);white-space:nowrap}
   .ctrl .cant.on{border-color:var(--amber);background:#fff7e6;color:var(--amber)}
   .row.cantOn input.count{opacity:.4;pointer-events:none;background:#f3f3f3}
 
-  .weeklytoggle{margin:18px 16px 0}
-  .weeklytoggle button{width:100%;padding:13px;border:1.5px dashed var(--green);background:#fff;color:var(--green-d);border-radius:12px;font-size:15px;font-weight:700}
+  .weeklytoggle{margin:20px 12px 0}
+  .weeklytoggle button{width:100%;padding:14px;border:1.5px dashed var(--green);background:#fff;color:var(--green-d);border-radius:12px;font-size:15px;font-weight:700}
   .weekly-wrap{display:none}
   .weekly-wrap.show{display:block}
 
-  .footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center}
-  .footer .count{flex:1;font-size:13px;color:var(--muted)}
-  .footer button{padding:14px 22px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:800}
+  .footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);
+          padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+  .footer .finner{max-width:640px;margin:0 auto;display:flex;gap:12px;align-items:center}
+  .footer .count{flex:1;font-size:14px;color:var(--muted)}
+  .footer button{padding:15px 24px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:800}
   .footer button:disabled{background:#a8c3b1}
 
-  #toast{position:fixed;bottom:104px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
+  #toast{position:fixed;bottom:calc(104px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+         background:var(--green);color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;font-size:14px;
+         opacity:0;transition:opacity .25s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
   #toast.show{opacity:1}#toast.err{background:var(--red)}
   .loading{padding:40px 16px;text-align:center;color:var(--muted)}
-  .legend{margin:4px 16px 0;font-size:11px;color:var(--muted)}
 </style>
 </head>
 <body>
-<header>
+<header><div class="hwrap">
   <h1>🍵 Store Stock Count</h1>
   <div class="sub" id="sub">Loading…</div>
-</header>
+</div></header>
 
-<div class="bar">
-  <div class="date"><label>Count date</label><input type="date" id="date"></div>
-  <div class="remind">📋 Count <b>sealed / unopened</b> stock only — don't count opened packs. Put deliveries in the small <b>+recv</b> box, not the count.</div>
-</div>
-<div class="legend">Each item: <b>count</b> = how many full units now · <b>+recv</b> = received today (optional) · <b>Can't count</b> = full/too many.</div>
+<main class="wrap">
+  <div class="bar">
+    <div class="date"><label>Count date</label><input type="date" id="date"></div>
+    <div class="remind">📋 Count <b>sealed / unopened</b> stock only — don't count opened packs. Deliveries are already included once they're unpacked and shelved.</div>
+  </div>
+  <div class="legend">For each item: type how many full units you have now, or tap <b>Can't count</b> if it's full / too many.</div>
 
-<div id="daily"></div>
+  <div id="daily"></div>
 
-<div class="weeklytoggle" id="weeklytoggle" style="display:none">
-  <button onclick="showWeekly()">+ Also do the weekly count (syrups, matcha, sauces…)</button>
-</div>
-<div class="weekly-wrap" id="weekly-wrap"><div id="weekly"></div></div>
+  <div class="weeklytoggle" id="weeklytoggle" style="display:none">
+    <button onclick="showWeekly()">+ Also do the weekly count (syrups, matcha, sauces…)</button>
+  </div>
+  <div class="weekly-wrap" id="weekly-wrap"><div id="weekly"></div></div>
+</main>
 
-<div class="footer">
+<div class="footer"><div class="finner">
   <div class="count" id="counter">Loading…</div>
   <button id="saveBtn" onclick="save()" disabled>Submit</button>
-</div>
+</div></div>
 <div id="toast"></div>
 
 <script>
-  // ====== PASTE YOUR DEPLOYED WEB APP URL HERE (ends in /exec) ======
+  // ====== Deployed web app URL (ends in /exec) ======
   var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyAxBwH6bjIgWCklPso8IWNn63otnUr2QroyJosDRjR9tw-OJ_ymmVJPbA4PosBMAzh/exec';
   var STATE=null;
 
@@ -88,10 +100,9 @@
       STATE=s;
       document.getElementById('sub').textContent =
         s.isWeeklyDay ? ('Today is '+s.weeklyDayName+' — daily + weekly count') : 'Daily count';
-      var t=new Date(s.today); document.getElementById('date').value=s.today;
+      document.getElementById('date').value=s.today;
       renderSection('daily', s.items.filter(function(i){return i.freq==='Daily';}));
       renderSection('weekly', s.items.filter(function(i){return i.freq==='Weekly';}));
-      // Weekly: auto-show on Friday, else offer the toggle.
       if(s.isWeeklyDay){ document.getElementById('weekly-wrap').classList.add('show'); }
       else { document.getElementById('weeklytoggle').style.display='block'; }
       updateCounter();
@@ -117,12 +128,11 @@
         var lowCls = (it.status==='LOW'||it.status==='OUT')?' class="LOW"':'';
         html+=
           '<div class="row" data-item="'+esc(it.item)+'">'+
-            '<div class="info"><span class="name">'+it.item+'</span>'+
+            '<div class="top"><span class="name">'+it.item+'</span>'+
               '<span class="now">now: <span'+lowCls+'>'+now+'</span></span></div>'+
             '<div class="ctrl">'+
               '<input class="count" inputmode="decimal" placeholder="count" oninput="onInput(this)">'+
               '<span class="unit">'+it.countUnit+'</span>'+
-              '<input class="recv" inputmode="decimal" placeholder="+recv" oninput="updateCounter()">'+
               '<button class="cant" onclick="toggleCant(this)">Can\'t count</button>'+
             '</div>'+
           '</div>';
@@ -135,21 +145,20 @@
   function onInput(el){ el.classList.toggle('filled', el.value!=='' && !isNaN(Number(el.value))); updateCounter(); }
   function toggleCant(btn){
     var row=btn.closest('.row'); row.classList.toggle('cantOn'); btn.classList.toggle('on');
-    if(row.classList.contains('cantOn')){ row.querySelector('.count').value=''; row.querySelector('.count').classList.remove('filled'); }
+    if(row.classList.contains('cantOn')){ var c=row.querySelector('.count'); c.value=''; c.classList.remove('filled'); }
     updateCounter();
   }
 
   function collect(){
     var out=[];
     document.querySelectorAll('.row[data-item]').forEach(function(row){
-      // only collect from visible rows (weekly hidden rows are ignored)
-      if(row.offsetParent===null) return;
+      if(row.offsetParent===null) return;                 // skip hidden (weekly not shown)
       var item=row.getAttribute('data-item');
-      var countEl=row.querySelector('.count'), recvEl=row.querySelector('.recv');
+      var countEl=row.querySelector('.count');
       var cant=row.classList.contains('cantOn');
-      var count=countEl.value, recv=Number(recvEl.value)||0;
+      var count=countEl.value;
       var has=(count!=='' && !isNaN(Number(count)));
-      if(has||recv>0||cant) out.push({item:item, count:has?Number(count):'', received:recv, cantCount:cant});
+      if(has||cant) out.push({item:item, count:has?Number(count):'', cantCount:cant});
     });
     return out;
   }
