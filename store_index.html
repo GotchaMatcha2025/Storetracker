@@ -155,7 +155,7 @@
   var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyAxBwH6bjIgWCklPso8IWNn63otnUr2QroyJosDRjR9tw-OJ_ymmVJPbA4PosBMAzh/exec';
   // Outlet list for the picker. The backend's list wins once deployed; this is
   // the fallback so the picker always shows. KEEP IN SYNC with CFG.OUTLETS in store_Code.gs.
-  var FALLBACK_OUTLETS = ['Woodleigh','New Outlet'];
+  var FALLBACK_OUTLETS = ['Woodleigh','Jurong Point'];
   function outletsList(s){ return (s && s.outlets && s.outlets.length>=2) ? s.outlets : FALLBACK_OUTLETS; }
   var VIEW='count', STATE=null, OUTLET=null, OVERRIDE=false;
 
@@ -197,7 +197,7 @@
     var url = WEBAPP_URL + (OUTLET ? ('?outlet='+encodeURIComponent(OUTLET)) : '');
     document.getElementById('daily').innerHTML='<div class="loading">Loading…</div>';
     fetch(url).then(function(r){return r.json();}).then(function(s){
-      if(!s.ok) throw new Error(s.error||'load failed');
+      if(!s.ok) throw  Error(s.error||'load failed');
       STATE=s; if(s.outlet) OUTLET=s.outlet;
       renderOutlets(outletsList(s), OUTLET);
       document.getElementById('sub').textContent =
@@ -338,7 +338,7 @@
     document.getElementById('list').innerHTML='<div class="loading">Loading…</div>';
     document.getElementById('summary').innerHTML='';
     fetch(url).then(function(r){return r.json();}).then(function(s){
-      if(!s.ok) throw new Error(s.error||'load failed');
+      if(!s.ok) throw  Error(s.error||'load failed');
       if(s.outlet) OUTLET=s.outlet;
       renderOutlets(outletsList(s), OUTLET);
       document.getElementById('sub').textContent='As of '+s.generatedAt;
