@@ -461,10 +461,8 @@
   }
   function renderOrder(s){
     document.getElementById('order-last').innerHTML = fmtLast(s.lastDaily,'Daily') + '<br>' + fmtLast(s.lastWeekly,'Weekly');
-    // anything that needs ordering: weekly items to top up + low daily items
-    var need = s.items.filter(function(i){
-      return (i.freq==='Weekly' && i.orderBuy>=1) || (i.freq==='Daily' && (i.status==='LOW'||i.status==='OUT'));
-    });
+    // only items actually running low (below their reorder point) — not everything below target
+    var need = s.items.filter(function(i){ return i.status==='LOW' || i.status==='OUT'; });
     if(!need.length){
       document.getElementById('orderlist').innerHTML='<div class="bigok">✅ Nothing to order right now.</div>'; return;
     }
