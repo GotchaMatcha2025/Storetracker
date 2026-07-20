@@ -47,9 +47,12 @@
   .rc .no small{display:block;font-weight:600;color:var(--muted);font-size:12px;margin-top:1px}
   .rc .del{border:none;background:#f4f2ee;color:var(--muted);width:32px;height:32px;border-radius:9px;font-size:17px;font-weight:800;font-family:inherit;flex-shrink:0}
   .rc .fields{margin-top:11px;display:flex;flex-direction:column;gap:9px}
-  .rc select,.rc input[type=text]{padding:11px;font-size:15px}
+  .rc select,.rc input[type=text],.rc textarea{padding:11px;font-size:15px}
   .rc .money input{padding:11px 11px 11px 4px;font-size:15px}
-  .rc .row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:15px;
+           background:#fafaf8;color:var(--ink);resize:none;line-height:1.45;overflow:hidden;min-height:46px}
+  textarea:focus{outline:none;border-color:var(--accent);background:#fff}
+  textarea::placeholder{color:#b3b7b1}
   .empty{color:var(--muted);font-size:13.5px;font-weight:600;text-align:center;padding:16px 0}
   .addmore{width:100%;margin-top:12px;padding:15px;border:1.5px dashed var(--accent);background:var(--accent-soft);
            color:var(--accent);border-radius:13px;font-family:inherit;font-size:15px;font-weight:800}
@@ -228,6 +231,23 @@
     };
     rd.readAsDataURL(file);
   }
+  // textarea grows with the list instead of scrolling inside a 2-line box
+  function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+2)+'px'; }
+
+  // If a line is numbered ("1.Milk"), Enter starts the next one already numbered.
+  // Staff who don't number anything are unaffected — plain Enter, plain new line.
+  function descKey(e, el, id){
+    if(e.key!=='Enter' || e.shiftKey) return;
+    var pos=el.selectionStart, before=el.value.slice(0,pos);
+    var line=before.slice(before.lastIndexOf('\n')+1);
+    var m=line.match(/^(\d+)([.)])\s*/); if(!m) return;
+    if(line.replace(m[0],'').trim()==='') return;   // empty numbered line → let Enter end the list
+    e.preventDefault();
+    var ins='\n'+(parseInt(m[1],10)+1)+m[2];
+    el.value = before + ins + el.value.slice(pos);
+    el.selectionStart = el.selectionEnd = pos + ins.length;
+    setField(id,'description',el.value); autoGrow(el);
+  }
   function removeItem(id){
     ITEMS = ITEMS.filter(function(it){ return it.id!==id; });
     renderCards();
@@ -269,21 +289,27 @@
         '<div class="fields">'+
           '<select onchange="setField('+it.id+',\'category\',this.value)">'+options(cats,it.category)+'</select>'+
           '<select onchange="setField('+it.id+',\'vendor\',this.value)">'+options(vends,it.vendor)+'</select>'+
-          '<div class="row2">'+
-            '<input type="text" placeholder="Description" value="'+escA(it.description)+'" oninput="setField('+it.id+',\'description\',this.value)">'+
-            '<div class="money"><span class="cur">$</span>'+
-              '<input type="text" inputmode="decimal" placeholder="0.00" value="'+escA(it.amount)+'" oninput="setField('+it.id+',\'amount\',this.value)">'+
-            '</div>'+
+          '<textarea rows="2" placeholder="What was bought — one item per line&#10;1.Milk&#10;2.Eggs" '+
+            'onkeydown="descKey(event,this,'+it.id+')" '+
+            'oninput="setField('+it.id+',\'description\',this.value);autoGrow(this)">'+esc(it.description)+'</textarea>'+
+          '<div class="money"><span class="cur">$</span>'+
+            '<input type="text" inputmode="decimal" placeholder="0.00" value="'+escA(it.amount)+'" oninput="setField('+it.id+',\'amount\',this.value)">'+
           '</div>'+
         '</div>'+
       '</div>';
     }).join('');
+    box.querySelectorAll('textarea').forEach(autoGrow);   // re-fit any descriptions already typed
     validate();
   }
 
   // ---------- validate + submit ----------
   function amt(it){ var n=parseFloat(it.amount); return isNaN(n)?0:n; }
-  function itemOk(it){ return it.category && it.vendor && String(it.description).trim() && amt(it)>0; }
+  // tidy a multi-line description: trim each line, drop blanks, keep the line breaks
+  function cleanDesc(s){
+    return String(s==null?'':s).split(/\r?\n/).map(function(l){ return l.trim(); })
+           .filter(function(l){ return l!==''; }).join('\n');
+  }
+  function itemOk(it){ return it.category && it.vendor && cleanDesc(it.description) && amt(it)>0; }
   function total(){ return ITEMS.reduce(function(s,it){ return s+amt(it); },0); }
 
   function validate(){
@@ -316,7 +342,7 @@
     var payload={ action:'save', form:FORM, date:val('date'), outlet:pillVal('outlets'),
       pouch:pillVal('pouches'), submittedBy:val('by'), email:val('email'),
       items: ITEMS.map(function(it){
-        return { category:it.category, vendor:it.vendor, description:String(it.description).trim(),
+        return { category:it.category, vendor:it.vendor, description:cleanDesc(it.description),
                  amount:amt(it), imageBase64:it.dataUrl.split(',')[1], mimeType:it.mime };
       }) };
 
