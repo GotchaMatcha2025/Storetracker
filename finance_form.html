@@ -6,7 +6,7 @@
 <title>Gotcha Matcha — Expense</title>
 <style>
   :root{--ink:#1c1c1a;--muted:#8a8f88;--line:#eceae4;--accent:#2f7a57;--accent-soft:#eef5f0;--bg:#fff;
-        --red:#c0392b;--red-soft:#fcefed;--amber:#9a6a00;--amber-soft:#fbf5e7;--clay:#c4704b}
+        --red:#c0392b;--red-soft:#fcefed;--amber:#9a6a00;--clay:#c4704b}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--ink);background:var(--bg);
        font-size:16px;line-height:1.4;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
@@ -23,36 +23,45 @@
   .pills{display:flex;gap:8px;flex-wrap:wrap}
   .pill{flex:1;min-width:84px;text-align:center;padding:12px 8px;border:1.5px solid var(--line);border-radius:12px;background:#fff;font-family:inherit;font-weight:700;font-size:14px;color:var(--muted)}
   .pill.on{border-color:var(--accent);background:var(--accent);color:#fff}
-  .pill .bal{font-weight:600;font-size:12px;opacity:.85}
-  .pill.low{border-color:var(--red);color:var(--red)}
-  .pill.low.on{background:var(--red);border-color:var(--red);color:#fff}
   input[type=text],input[type=date],select{width:100%;padding:13px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:16px;background:#fafaf8;color:var(--ink)}
   input:focus,select:focus{outline:none;border-color:var(--accent);background:#fff}
   input.miss,select.miss{border-color:var(--red);background:var(--red-soft)}
   .money{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;background:#fafaf8;overflow:hidden}
   .money:focus-within{border-color:var(--accent);background:#fff}
+  .money.miss{border-color:var(--red);background:var(--red-soft)}
   .money .cur{padding:0 4px 0 13px;color:var(--muted);font-weight:700}
   .money input{border:none;background:transparent;flex:1;padding:13px 13px 13px 4px;font-size:17px;font-weight:700;font-family:inherit}
   .money input:focus{outline:none}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-  .drop{border:2px dashed var(--clay);border-radius:14px;padding:22px 16px;text-align:center;position:relative;background:#faf6f3;margin-top:8px}
+  .drop{border:2px dashed var(--clay);border-radius:14px;padding:20px 16px;text-align:center;position:relative;background:#faf6f3;margin-top:8px}
   .drop input[type=file]{position:absolute;inset:0;opacity:0;width:100%;height:100%}
-  .drop .ic{font-size:30px} .drop p{font-size:.85rem;color:var(--muted);font-weight:700;margin-top:6px}
-  .thumbwrap{display:flex;gap:12px;align-items:center;margin-top:12px}
-  .thumb{width:64px;height:64px;border-radius:10px;object-fit:cover;border:1px solid var(--line)}
-  .ocrst{font-size:13px;font-weight:700}
-  .ocrst.go{color:var(--amber)} .ocrst.ok{color:var(--accent)} .ocrst.err{color:var(--red)}
+  .drop .ic{font-size:28px} .drop p{font-size:.85rem;color:var(--muted);font-weight:700;margin-top:6px}
+
+  /* one card per receipt */
+  .rc{border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-top:12px;background:#fff}
+  .rc.miss{border-color:var(--red)}
+  .rc .top{display:flex;gap:12px;align-items:center}
+  .rc .thumb{width:56px;height:56px;border-radius:10px;object-fit:cover;border:1px solid var(--line);flex-shrink:0}
+  .rc .no{flex:1;font-weight:800;font-size:14px}
+  .rc .no small{display:block;font-weight:600;color:var(--muted);font-size:12px;margin-top:1px}
+  .rc .del{border:none;background:#f4f2ee;color:var(--muted);width:32px;height:32px;border-radius:9px;font-size:17px;font-weight:800;font-family:inherit;flex-shrink:0}
+  .rc .fields{margin-top:11px;display:flex;flex-direction:column;gap:9px}
+  .rc select,.rc input[type=text]{padding:11px;font-size:15px}
+  .rc .money input{padding:11px 11px 11px 4px;font-size:15px}
+  .rc .row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .empty{color:var(--muted);font-size:13.5px;font-weight:600;text-align:center;padding:16px 0}
 
   .footer{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.95);backdrop-filter:saturate(180%) blur(8px);
           border-top:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-bottom))}
   .footer .in{max-width:560px;margin:0 auto;display:flex;gap:14px;align-items:center}
   .footer .m{flex:1;font-size:13px;color:var(--muted);font-weight:600}
+  .footer .m b{display:block;color:var(--ink);font-size:16px;font-weight:800}
   .footer button{padding:14px 28px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:800;font-family:inherit}
   .footer button:disabled{background:#c3d6cb}
   #done{display:none;text-align:center;padding:48px 20px}
   #done .big{font-size:48px} #done h2{font-weight:800;color:var(--accent);font-size:1.3rem;margin:10px 0 6px}
-  #done p{color:var(--muted);font-weight:600;font-size:.85rem;word-break:break-all}
+  #done p{color:var(--muted);font-weight:600;font-size:.82rem;white-space:pre-line;word-break:break-all}
   #done button{margin-top:16px;background:none;border:1.5px solid var(--accent);color:var(--accent);border-radius:12px;padding:12px 26px;font-family:inherit;font-weight:800}
   #toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-14px);background:var(--ink);color:#fff;font-weight:700;font-size:14px;padding:12px 20px;border-radius:99px;opacity:0;transition:all .25s;z-index:40;max-width:88vw;text-align:center}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)} #toast.err{background:var(--red)}
@@ -62,7 +71,7 @@
 <body>
 <header>
   <h1>🍵 Expense Submit</h1>
-  <div class="sub">Snap the receipt — it reads the amount, you pick category + vendor</div>
+  <div class="sub">Add all your receipts, fill each one, submit once</div>
   <div class="tabs">
     <button id="tab-petty" class="on" onclick="setForm('petty')">🪙 Petty Cash</button>
     <button id="tab-personal" onclick="setForm('personal')">💳 Personal Claim</button>
@@ -71,12 +80,6 @@
 
 <main class="wrap" id="form">
   <div id="cfgWarn" class="warn">⚠ Web App URL not set — paste your /exec URL into WEBAPP_URL in this file.</div>
-
-  <div class="lbl">Receipt photo <span class="req">*</span></div>
-  <div class="drop"><input type="file" id="file" accept="image/*" onchange="onFile(this)">
-    <div class="ic">📷</div><p>Tap to snap or upload the receipt</p></div>
-  <div class="thumbwrap" id="thumbwrap" style="display:none">
-    <img class="thumb" id="thumb"><span class="ocrst" id="ocrst"></span></div>
 
   <div class="lbl">Date <span class="req">*</span></div>
   <input type="date" id="date">
@@ -89,32 +92,28 @@
     <div class="pills" id="pouches"></div>
   </div>
 
-  <div class="lbl">Category <span class="req">*</span></div>
-  <select id="category" onchange="this.classList.remove('miss');validate()"><option value="">Choose…</option></select>
-
-  <div class="lbl">Vendor <span class="req">*</span></div>
-  <select id="vendor" onchange="this.classList.remove('miss');validate()"><option value="">Choose…</option></select>
-
-  <div class="lbl">Description &amp; amount <span style="font-weight:600;text-transform:none;letter-spacing:0">(auto-read — check it)</span></div>
-  <input type="text" id="desc" placeholder="what was bought" oninput="validate()">
-  <div class="two" style="margin-top:12px">
-    <div class="money"><span class="cur">$</span><input type="text" inputmode="decimal" id="amount" placeholder="0.00" oninput="validate()"></div>
+  <div class="two" style="margin-top:20px">
     <input type="text" id="by" placeholder="Your name" oninput="onBy()">
+    <input type="text" id="email" inputmode="email" placeholder="Your email" oninput="onEmail()" style="display:none">
+  </div>
+  <div id="emailNote" style="display:none;font-size:12px;color:var(--muted);font-weight:600;margin-top:6px">
+    We'll email you when this claim is reimbursed.
   </div>
 
-  <div id="emailWrap" style="display:none">
-    <div class="lbl">Your email <span class="req">*</span> <span style="font-weight:600;text-transform:none;letter-spacing:0">— we'll notify you when reimbursed</span></div>
-    <input type="text" id="email" inputmode="email" placeholder="name@email.com" oninput="onEmail()">
-  </div>
+  <div class="lbl">Receipts <span class="req">*</span></div>
+  <div class="drop"><input type="file" id="file" accept="image/*" multiple onchange="onFiles(this)">
+    <div class="ic">📷</div><p>Tap to add receipts — you can pick several at once</p></div>
+
+  <div id="cards"><div class="empty" id="emptyMsg">No receipts yet</div></div>
 </main>
 
 <div id="done">
-  <div class="big">✅</div><h2>Submitted</h2><p id="doneMsg"></p>
-  <button onclick="resetForm()">Submit another</button>
+  <div class="big">✅</div><h2 id="doneTitle">Submitted</h2><p id="doneMsg"></p>
+  <button onclick="resetForm()">Submit more</button>
 </div>
 
 <div class="footer"><div class="in">
-  <div class="m" id="foot">Snap a receipt to start</div>
+  <div class="m" id="foot">Add a receipt to start</div>
   <button id="submitBtn" onclick="submit()" disabled>Submit</button>
 </div></div>
 <div id="toast"></div>
@@ -122,14 +121,17 @@
 <script>
   // ====== PASTE YOUR DEPLOYED WEB APP URL HERE (ends in /exec) ======
   var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyn4q41hPW-Al9NXG79tB9PiQHEE8NsYoC3zwfXv2bkqNntyNQsvUWLe9uth8RtyyJdeA/exec';
-  var FORM='petty', CFG=null, IMG=null, MIME=null, ocrDone=false;
 
-  function val(id){ return (document.getElementById(id).value||'').trim(); }
-  function nv(id){ var n=parseFloat(val(id)); return isNaN(n)?0:n; }
-  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function escA(s){ return String(s).replace(/"/g,'&quot;'); }
-  function outletKey(){ return 'gm_fin_outlet'; }
+  var FORM='petty', CFG=null, ITEMS=[], UID=0;
+  var MAX_PX = 1600, JPEG_Q = 0.82;   // receipts are downscaled before upload so a
+                                      // 10-photo batch doesn't blow the POST size limit
 
+  function val(id){ var e=document.getElementById(id); return e ? (e.value||'').trim() : ''; }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escA(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }
+  function money(n){ return '$'+(Number(n)||0).toFixed(2); }
+
+  // ---------- form switch ----------
   function setForm(f){
     FORM=f;
     document.getElementById('tab-petty').classList.toggle('on', f==='petty');
@@ -143,11 +145,11 @@
       CFG=s;
       renderPills('outlets', s.outlets, 'gm_fin_outlet');
       document.getElementById('pouchWrap').style.display = s.hasPouch ? 'block' : 'none';
-      if(s.hasPouch) renderPouchPills(s.pouches, s.pouchBalances);
-      document.getElementById('emailWrap').style.display = (FORM==='personal') ? 'block' : 'none';
-      fillSelect('category', s.categories);
-      fillSelect('vendor', s.vendors);
-      validate();
+      if(s.hasPouch) renderPills('pouches', s.pouches, 'gm_fin_pouch');
+      var showEmail = (FORM==='personal');
+      document.getElementById('email').style.display = showEmail ? 'block' : 'none';
+      document.getElementById('emailNote').style.display = showEmail ? 'block' : 'none';
+      renderCards();   // repaint so each card picks up this form's category/vendor lists
     }).catch(function(e){ toast('⚠ '+e.message, true); });
   }
   function renderPills(id, list, storeKey){
@@ -164,89 +166,146 @@
     try{ localStorage.setItem(el.getAttribute('data-k'), v); }catch(e){}
     validate();
   }
-  function renderPouchPills(list, balances){
-    var box=document.getElementById('pouches');
-    var bmap={}; (balances||[]).forEach(function(b){ bmap[b.pouch]=b; });
-    var saved=''; try{ saved=localStorage.getItem('gm_fin_pouch')||''; }catch(e){}
-    box.innerHTML=(list||[]).map(function(o){
-      var b=bmap[o]; var badge=b?(' <span class="bal">· $'+b.balance+'</span>'):''; var low=(b&&b.low)?' low':'';
-      return '<div class="pill'+(o===saved?' on':'')+low+'" data-k="gm_fin_pouch" onclick="pick(this,\''+escA(o)+'\')">'+esc(o)+badge+'</div>';
-    }).join('');
-    box.setAttribute('data-val', (list||[]).indexOf(saved)>=0 ? saved : '');
-  }
   function pillVal(id){ return document.getElementById(id).getAttribute('data-val')||''; }
-  function fillSelect(id, list){
-    var s=document.getElementById(id);
-    s.innerHTML='<option value="">Choose…</option>'+(list||[]).map(function(o){return '<option value="'+escA(o)+'">'+esc(o)+'</option>';}).join('');
-  }
   function onBy(){ document.getElementById('by').classList.remove('miss'); try{localStorage.setItem('gm_fin_by',val('by'));}catch(e){} validate(); }
   function onEmail(){ document.getElementById('email').classList.remove('miss'); try{localStorage.setItem('gm_fin_email',val('email'));}catch(e){} validate(); }
 
-  function onFile(inp){
-    var f=inp.files[0]; if(!f) return;
+  // ---------- receipts ----------
+  function onFiles(inp){
+    var files = Array.prototype.slice.call(inp.files||[]);
+    if(!files.length) return;
+    var pending = files.length;
+    files.forEach(function(f){
+      shrink(f, function(dataUrl, mime){
+        ITEMS.push({ id:++UID, dataUrl:dataUrl, mime:mime,
+                     category:'', vendor:'', description:'', amount:'' });
+        if(--pending===0){ renderCards(); toast(files.length+' receipt'+(files.length>1?'s':'')+' added'); }
+      });
+    });
+    inp.value='';   // so picking the same file again still fires onchange
+  }
+  // draw the photo onto a canvas at a sane size — keeps the batch payload small
+  function shrink(file, done){
     var rd=new FileReader();
     rd.onload=function(e){
-      IMG=e.target.result.split(',')[1]; MIME=f.type;
-      document.getElementById('thumb').src=e.target.result;
-      document.getElementById('thumbwrap').style.display='flex';
-      runOcr();
+      var img=new Image();
+      img.onload=function(){
+        var w=img.width, h=img.height, s=Math.min(1, MAX_PX/Math.max(w,h));
+        var c=document.createElement('canvas'); c.width=Math.round(w*s); c.height=Math.round(h*s);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        try{ done(c.toDataURL('image/jpeg',JPEG_Q), 'image/jpeg'); }
+        catch(err){ done(e.target.result, file.type); }   // canvas blocked → send original
+      };
+      img.onerror=function(){ done(e.target.result, file.type); };
+      img.src=e.target.result;
     };
-    rd.readAsDataURL(f);
+    rd.readAsDataURL(file);
   }
-  function runOcr(){
-    var st=document.getElementById('ocrst'); st.className='ocrst go'; st.textContent='Reading receipt…';
-    ocrDone=false; validate();
-    fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'ocr', imageBase64:IMG, mimeType:MIME})})
-      .then(function(r){return r.json();}).then(function(res){
-        if(res.ok){
-          if(res.description && !val('desc')) document.getElementById('desc').value=res.description;
-          if(res.amount) document.getElementById('amount').value=Number(res.amount).toFixed(2);
-          st.className='ocrst ok'; st.textContent='✓ Read — check the amount';
-        } else { st.className='ocrst err'; st.textContent='Couldn\'t read — type amount in'; }
-        ocrDone=true; validate();
-      }).catch(function(e){ st.className='ocrst err'; st.textContent='Read failed — type amount in'; ocrDone=true; validate(); });
+  function removeItem(id){
+    ITEMS = ITEMS.filter(function(it){ return it.id!==id; });
+    renderCards();
+  }
+  function setField(id, field, v){
+    var it = ITEMS.filter(function(x){ return x.id===id; })[0]; if(!it) return;
+    it[field] = v;
+    var card = document.getElementById('rc'+id); if(card) card.classList.remove('miss');
+    // update the card subtitle in place — never re-render here, it would kill focus mid-typing
+    var sub = document.getElementById('sub'+id);
+    if(sub) sub.textContent = amt(it)>0 ? money(amt(it)) : 'amount not set';
+    validate();
+  }
+  function options(list, chosen){
+    return '<option value="">Choose…</option>' + (list||[]).map(function(o){
+      return '<option value="'+escA(o)+'"'+(o===chosen?' selected':'')+'>'+esc(o)+'</option>';
+    }).join('');
+  }
+  function renderCards(){
+    var box=document.getElementById('cards');
+    if(!ITEMS.length){ box.innerHTML='<div class="empty">No receipts yet</div>'; validate(); return; }
+    var cats=(CFG&&CFG.categories)||[], vends=(CFG&&CFG.vendors)||[];
+    box.innerHTML = ITEMS.map(function(it,i){
+      return ''+
+      '<div class="rc" id="rc'+it.id+'">'+
+        '<div class="top">'+
+          '<img class="thumb" src="'+it.dataUrl+'">'+
+          '<div class="no">Receipt '+(i+1)+'<small id="sub'+it.id+'">'+(amt(it)>0?money(amt(it)):'amount not set')+'</small></div>'+
+          '<button class="del" onclick="removeItem('+it.id+')" title="Remove">×</button>'+
+        '</div>'+
+        '<div class="fields">'+
+          '<select onchange="setField('+it.id+',\'category\',this.value)">'+options(cats,it.category)+'</select>'+
+          '<select onchange="setField('+it.id+',\'vendor\',this.value)">'+options(vends,it.vendor)+'</select>'+
+          '<div class="row2">'+
+            '<input type="text" placeholder="Description" value="'+escA(it.description)+'" oninput="setField('+it.id+',\'description\',this.value)">'+
+            '<div class="money"><span class="cur">$</span>'+
+              '<input type="text" inputmode="decimal" placeholder="0.00" value="'+escA(it.amount)+'" oninput="setField('+it.id+',\'amount\',this.value)">'+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+    validate();
   }
 
+  // ---------- validate + submit ----------
+  function amt(it){ var n=parseFloat(it.amount); return isNaN(n)?0:n; }
+  function itemOk(it){ return it.category && it.vendor && String(it.description).trim() && amt(it)>0; }
+  function total(){ return ITEMS.reduce(function(s,it){ return s+amt(it); },0); }
+
   function validate(){
-    var ok = IMG && pillVal('outlets') && val('category') && val('vendor') && nv('amount')>0 && val('by')
-             && (!CFG || !CFG.hasPouch || pillVal('pouches'))
-             && (FORM!=='personal' || val('email').indexOf('@')>0);
+    var headOk = pillVal('outlets') && val('by')
+                 && (!CFG || !CFG.hasPouch || pillVal('pouches'))
+                 && (FORM!=='personal' || val('email').indexOf('@')>0);
+    var incomplete = ITEMS.filter(function(it){ return !itemOk(it); }).length;
+    var ok = ITEMS.length>0 && incomplete===0 && headOk;
     document.getElementById('submitBtn').disabled = !ok;
-    document.getElementById('foot').textContent = !IMG ? 'Snap a receipt to start'
-      : (ok ? ('$'+nv('amount').toFixed(2)) : 'Fill category, vendor, amount, name');
+    var f=document.getElementById('foot');
+    if(!ITEMS.length) f.textContent='Add a receipt to start';
+    else if(incomplete) f.innerHTML='<b>'+incomplete+' receipt'+(incomplete>1?'s':'')+' incomplete</b>'+ITEMS.length+' total';
+    else if(!headOk) f.innerHTML='<b>'+money(total())+'</b>Fill outlet'+(CFG&&CFG.hasPouch?', pouch':'')+', name'+(FORM==='personal'?', email':'');
+    else f.innerHTML='<b>'+money(total())+'</b>'+ITEMS.length+' receipt'+(ITEMS.length>1?'s':'');
   }
 
   function submit(){
-    if(!IMG){ toast('Add a receipt photo',true); return; }
+    if(!ITEMS.length){ toast('Add a receipt',true); return; }
     if(!pillVal('outlets')){ toast('Pick an outlet',true); return; }
     if(CFG&&CFG.hasPouch&&!pillVal('pouches')){ toast('Pick a pouch',true); return; }
-    if(!val('category')){ document.getElementById('category').classList.add('miss'); toast('Pick a category',true); return; }
-    if(!val('vendor')){ document.getElementById('vendor').classList.add('miss'); toast('Pick a vendor',true); return; }
-    if(nv('amount')<=0){ document.getElementById('amount').focus(); toast('Enter the amount',true); return; }
     if(!val('by')){ document.getElementById('by').classList.add('miss'); toast('Enter your name',true); return; }
     if(FORM==='personal' && val('email').indexOf('@')<0){ document.getElementById('email').classList.add('miss'); toast('Enter your email',true); return; }
+    var bad = ITEMS.filter(function(it){ return !itemOk(it); });
+    if(bad.length){
+      bad.forEach(function(it){ var c=document.getElementById('rc'+it.id); if(c) c.classList.add('miss'); });
+      var first=document.getElementById('rc'+bad[0].id); if(first) first.scrollIntoView({behavior:'smooth',block:'center'});
+      toast(bad.length+' receipt'+(bad.length>1?'s':'')+' still incomplete',true); return;
+    }
+
     var payload={ action:'save', form:FORM, date:val('date'), outlet:pillVal('outlets'),
-      pouch:pillVal('pouches'), category:val('category'), vendor:val('vendor'),
-      description:val('desc'), amount:nv('amount'), submittedBy:val('by'), email:val('email'), imageBase64:IMG, mimeType:MIME };
+      pouch:pillVal('pouches'), submittedBy:val('by'), email:val('email'),
+      items: ITEMS.map(function(it){
+        return { category:it.category, vendor:it.vendor, description:String(it.description).trim(),
+                 amount:amt(it), imageBase64:it.dataUrl.split(',')[1], mimeType:it.mime };
+      }) };
+
     var btn=document.getElementById('submitBtn'); btn.disabled=true; btn.textContent='Saving…';
     fetch(WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
       .then(function(r){return r.json();}).then(function(res){
         btn.disabled=false; btn.textContent='Submit';
-        if(res.ok){ document.getElementById('doneMsg').textContent=res.receiptName||''; showDone(); }
-        else { toast('⚠ '+(res.message||'Failed'),true); }
+        if(res.ok){
+          document.getElementById('doneTitle').textContent =
+            (res.count>1 ? (res.count+' receipts submitted') : 'Submitted');
+          document.getElementById('doneMsg').textContent =
+            (res.total!=null ? (money(res.total)+'\n\n') : '') + (res.receiptName||'');
+          showDone();
+        } else { toast('⚠ '+(res.message||'Failed'),true); }
       }).catch(function(e){ btn.disabled=false; btn.textContent='Submit'; toast('⚠ '+e.message,true); });
   }
   function showDone(){ document.getElementById('form').style.display='none'; document.querySelector('.footer').style.display='none'; document.getElementById('done').style.display='block'; }
   function resetForm(){
-    IMG=null; MIME=null; ocrDone=false;
-    document.getElementById('file').value=''; document.getElementById('thumbwrap').style.display='none';
-    ['desc','amount'].forEach(function(id){ document.getElementById(id).value=''; });
-    document.getElementById('category').value=''; document.getElementById('vendor').value='';
+    ITEMS=[]; document.getElementById('file').value=''; renderCards();
     document.getElementById('form').style.display='block'; document.querySelector('.footer').style.display='block';
     document.getElementById('done').style.display='none'; validate();
+    window.scrollTo(0,0);
   }
-  function toast(m,err){var t=document.getElementById('toast');t.textContent=m;t.className='show'+(err?' err':'');clearTimeout(t._t);t._t=setTimeout(function(){t.className='';},3500);}
+  function toast(m,err){var t=document.getElementById('toast');t.textContent=m;t.className='show'+(err?' err':'');clearTimeout(t._t);t._t=setTimeout(function(){t.className='';},3000);}
 
   (function(){
     var t=new Date();
