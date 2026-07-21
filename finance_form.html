@@ -15,8 +15,23 @@
   header h1{font-size:19px;font-weight:700}
   header .sub{font-size:13px;color:var(--muted);margin-top:2px}
   .tabs{display:flex;gap:8px;margin:14px 0 0}
-  .tabs button{flex:1;padding:13px;border:1px solid var(--line);background:#fff;border-radius:11px;font-family:inherit;font-size:14px;font-weight:700;color:var(--muted)}
+  .tabs button{flex:1;padding:12px 6px;border:1px solid var(--line);background:#fff;border-radius:11px;font-family:inherit;font-size:13px;font-weight:700;color:var(--muted);line-height:1.25}
   .tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .tabs button#tab-cashout.on{background:var(--red);border-color:var(--red)}
+
+  /* blocking warning before Register Cash */
+  #gate{display:none;position:fixed;inset:0;background:rgba(28,28,26,.55);z-index:60;
+        align-items:center;justify-content:center;padding:24px}
+  #gate.show{display:flex}
+  #gate .box{background:#fff;border-radius:18px;padding:26px 22px;max-width:400px;text-align:center}
+  #gate .ic{font-size:42px}
+  #gate h3{font-size:18px;font-weight:800;margin:8px 0 10px;color:var(--red)}
+  #gate p{font-size:14px;color:var(--ink);font-weight:600;line-height:1.5;white-space:pre-line}
+  #gate button{width:100%;margin-top:10px;padding:14px;border-radius:12px;font-family:inherit;font-weight:800;font-size:15px}
+  #gate .go{background:var(--accent);color:#fff;border:none}
+  #gate .ok{background:none;border:1.5px solid var(--line);color:var(--muted);font-size:13.5px}
+  .modebar{display:none;background:var(--red-soft);border:1.5px solid #e3aca3;color:var(--red);
+           border-radius:12px;padding:11px 13px;font-size:13px;font-weight:700;margin-top:16px}
 
   .lbl{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:20px 0 8px}
   .lbl .req{color:var(--red)}
@@ -79,13 +94,27 @@
   <h1>🍵 Expense Submit</h1>
   <div class="sub">Add all your receipts, fill each one, submit once</div>
   <div class="tabs">
-    <button id="tab-petty" class="on" onclick="setForm('petty')">🪙 Petty Cash</button>
-    <button id="tab-personal" onclick="setForm('personal')">💳 Personal Claim</button>
+    <button id="tab-petty" class="on" onclick="setForm('petty')">Petty Cash</button>
+    <button id="tab-personal" onclick="setForm('personal')">Personal Claim</button>
+    <button id="tab-cashout" onclick="setForm('cashout')">Register Cash</button>
   </div>
 </header>
 
+<!-- blocking warning, shown before the Register Cash form can be used -->
+<div id="gate">
+  <div class="box">
+    <div class="ic">🚫</div>
+    <h3>Use petty cash first</h3>
+    <p id="gateMsg"></p>
+    <button class="go" onclick="gateBack()">Take me to Petty Cash</button>
+    <button class="ok" onclick="gateAccept()">The pouch is empty — continue</button>
+  </div>
+</div>
+
 <main class="wrap" id="form">
   <div id="cfgWarn" class="warn">⚠ Web App URL not set — paste your /exec URL into WEBAPP_URL in this file.</div>
+  <div class="modebar" id="modebar">💵 Register cash — this money came out of the till, not the petty pouch.
+    It must match the Cash Out figure on tonight's closing form.</div>
 
   <div class="lbl">Date <span class="req">*</span></div>
   <input type="date" id="date">
@@ -148,10 +177,31 @@
   // ---------- form switch ----------
   function setForm(f){
     FORM=f;
-    document.getElementById('tab-petty').classList.toggle('on', f==='petty');
-    document.getElementById('tab-personal').classList.toggle('on', f==='personal');
+    ['petty','personal','cashout'].forEach(function(k){
+      document.getElementById('tab-'+k).classList.toggle('on', f===k);
+    });
+    document.getElementById('modebar').style.display = (f==='cashout') ? 'block' : 'none';
+    // gate up front, before the config round-trip — so a dropped connection can't
+    // hand someone an open register-cash form
+    if(f==='cashout') showGate(); else hideGate();
     loadConfig();
   }
+
+  // Register cash is the exception, not an option — the form stays behind this
+  // until they confirm the pouch isn't available. Re-shown every time they switch
+  // to the tab, deliberately: it should never become muscle memory.
+  function showGate(text){
+    document.getElementById('gateMsg').textContent = text ||
+      'Do not use cash from the register if you have petty cash.';
+    document.getElementById('gate').classList.add('show');
+    document.getElementById('form').style.visibility='hidden';
+  }
+  function hideGate(){
+    document.getElementById('gate').classList.remove('show');
+    document.getElementById('form').style.visibility='visible';
+  }
+  function gateAccept(){ hideGate(); }
+  function gateBack(){ hideGate(); setForm('petty'); }
   function loadConfig(){
     document.getElementById('pouchWrap').style.display='none';
     fetch(WEBAPP_URL + '?form=' + FORM).then(function(r){return r.json();}).then(function(s){
@@ -164,6 +214,7 @@
       document.getElementById('email').style.display = showEmail ? 'block' : 'none';
       document.getElementById('emailNote').style.display = showEmail ? 'block' : 'none';
       renderCards();   // repaint so each card picks up this form's category/vendor lists
+      if(s.warn) showGate(s.warn); else hideGate();
     }).catch(function(e){ toast('⚠ '+e.message, true); });
   }
   function renderPills(id, list, storeKey){
