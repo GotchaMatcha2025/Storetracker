@@ -163,6 +163,7 @@
   // ====== PASTE YOUR DEPLOYED WEB APP URL HERE (ends in /exec) ======
   var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyn4q41hPW-Al9NXG79tB9PiQHEE8NsYoC3zwfXv2bkqNntyNQsvUWLe9uth8RtyyJdeA/exec';
 
+
   var FORM='petty', CFG=null, ITEMS=[], UID=0;
   var MAX_PX = 1600, JPEG_Q = 0.82;   // receipts are downscaled before upload so a
                                       // big batch doesn't blow the POST size limit
@@ -190,10 +191,16 @@
   // Register cash is the exception, not an option — the form stays behind this
   // until they confirm the pouch isn't available. Re-shown every time they switch
   // to the tab, deliberately: it should never become muscle memory.
-  function showGate(text){
-    document.getElementById('gateMsg').textContent = text ||
-      'Do not use cash from the register if you have petty cash.';
-    document.getElementById('gate').classList.add('show');
+  //
+  // Purely client-side on purpose. It used to also react to the config response,
+  // which made it show → hide → show as the request came back. A safety gate must
+  // not depend on a network round-trip.
+  var GATE_TEXT = 'Do not use cash from the register if you have petty cash.';
+  function showGate(){
+    var g=document.getElementById('gate');
+    if(g.classList.contains('show')) return;        // already up — don't re-trigger
+    document.getElementById('gateMsg').textContent = GATE_TEXT;
+    g.classList.add('show');
     document.getElementById('form').style.visibility='hidden';
   }
   function hideGate(){
@@ -206,6 +213,7 @@
     document.getElementById('pouchWrap').style.display='none';
     fetch(WEBAPP_URL + '?form=' + FORM).then(function(r){return r.json();}).then(function(s){
       if(!s.ok) throw new Error(s.message||'load failed');
+      if(s.form && s.form!==FORM) return;   // tab was switched again while this was in flight
       CFG=s;
       renderPills('outlets', s.outlets, 'gm_fin_outlet');
       document.getElementById('pouchWrap').style.display = s.hasPouch ? 'block' : 'none';
@@ -214,7 +222,6 @@
       document.getElementById('email').style.display = showEmail ? 'block' : 'none';
       document.getElementById('emailNote').style.display = showEmail ? 'block' : 'none';
       renderCards();   // repaint so each card picks up this form's category/vendor lists
-      if(s.warn) showGate(s.warn); else hideGate();
     }).catch(function(e){ toast('⚠ '+e.message, true); });
   }
   function renderPills(id, list, storeKey){
